@@ -1,4 +1,4 @@
-from ERADist import ERADist
+from ..Classes.ERADist import ERADist
 import numpy as np
 import matplotlib.pylab as plt
 
