@@ -1,4 +1,8 @@
-from ..Classes.ERADist import ERADist
+from Classes.ERADist import ERADist
+from Classes.ERADist import Gaussian
+from Classes.ERADist import Lognormal
+from Classes.ERADist import Beta
+from Classes.ERANataf import ERANataf
 import numpy as np
 import matplotlib.pylab as plt
 
@@ -37,10 +41,102 @@ References:
 ---------------------------------------------------------------------------
 '''
 
-np.random.seed(2021) #initializing random number generator
+np.random.seed(2026) #initializing random number generator
 
+m1 = 0
+std1 = 1
+
+m2 = 2
+std2 = 1
+
+Gaussian_abstract_1 = Gaussian("MOM", [m1, std1])
+Gaussian_abstract_2 = Gaussian("PAR", [m2, std2], ID="Identitiy_to_function")
+
+print(Gaussian_abstract_1.ID)
+print(Gaussian_abstract_2.ID)
+
+print(Gaussian_abstract_1.mean())
+
+print("Verifying the Lognormal one:")
+
+par_LN = [0, 1]
+
+mom_LN = [np.exp(par_LN[0] + 0.5 * par_LN[1]**2), np.sqrt((np.exp(par_LN[1]**2) - 1) * np.exp(2*par_LN[0] + par_LN[1]**2)) ]
+
+lognormal_abstract_1 = Lognormal("MOM", mom_LN, ID="Moment Defined")
+lognormal_abstract_2 = Lognormal("PAR", par_LN, ID="Parameter Defined")
+
+print(lognormal_abstract_1.mean())
+print(lognormal_abstract_2.mean())
+
+print(lognormal_abstract_1.std())
+print(lognormal_abstract_2.std())
+
+print("Verifying Beta one:")
+
+r = 0.5
+s = 0.5
+a = 0
+b = 1
+
+analytical_mean_beta = r / (r + s)
+beta_abstract_1 = Beta("PAR", [r, s, a, b])
+
+ns = 5000
+beta_samples = beta_abstract_1.random(ns)
+
+# analytical grid
+x = np.linspace(a, b, 1000)
+pdf_value = beta_abstract_1.pdf_function(x)
+
+# plot
+plt.hist(beta_samples, bins=50, density=True, alpha=0.5)
+plt.plot(x, pdf_value, linewidth=2)
+
+plt.xlabel("x")
+plt.ylabel("El PDF-o")
+plt.title("Beta distribution: PDF + samples")
+plt.show()
+
+
+# OHA?! NANIII?!!
+# A Nataf?
+print("Nataf Timeeee")
+
+RVector = ERANataf([Gaussian_abstract_1, lognormal_abstract_1], [ [1, 0], [0 , 1] ])
+
+ns = 1000
+samples = RVector.random(ns)
+
+# sample mean
+mean = samples.mean(axis=0)
+
+fig, axs = plt.subplots(2, 2, figsize=(8, 8))
+
+# --- Scatter plot (bottom-left) ---
+axs[1, 0].scatter(samples[:, 0], samples[:, 1])
+axs[1, 0].scatter(mean[0], mean[1], marker='x', s=100)
+axs[1, 0].set_xlabel("x")
+axs[1, 0].set_ylabel("y")
+axs[1, 0].set_title("Scatter plot")
+
+# --- Histogram of x (top-left) ---
+axs[0, 0].hist(samples[:, 0], bins=30)
+axs[0, 0].set_title("Histogram of x")
+
+# --- Histogram of y (bottom-right) ---
+axs[1, 1].hist(samples[:, 1], bins=30)
+axs[1, 1].set_title("Histogram of y")
+
+# --- Empty top-right subplot ---
+axs[0, 1].axis("off")
+
+plt.show()
+
+
+print("End of Code :C")
 ''' Definition of an ERADist object by the distribution parameters '''
-
+"""
 dist = ERADist('lognormal','PAR',[2,0.5])
 
 # computation of the first two moments
@@ -96,3 +192,5 @@ fig_cdf = fig_dist.add_subplot(122)
 fig_cdf.plot(x_plot, cdf)
 fig_cdf.set_xlabel(r'$X$')
 fig_cdf.set_ylabel(r'$CDF$')
+
+"""

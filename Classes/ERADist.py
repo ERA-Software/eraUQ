@@ -4,8 +4,9 @@ import scipy as sp
 from scipy import optimize, stats, special
 import warnings
 
-from EmpiricalDist import EmpDist
+from Classes.EmpiricalDist import EmpDist
 
+from abc import ABC, abstractmethod
 """
 ---------------------------------------------------------------------------
 Generation of distribution objects
@@ -51,6 +52,129 @@ moment or by data, given as a vector.
 ---------------------------------------------------------------------------
 """
 
+class ERADist_abc(ABC):
+
+    # Any concrete class (in this case the *actual* Distributions) will have these variables.
+    # There are different ways of declaring them in an abstract class, but this approach (with __innit__)
+    # will ENFORCE that these variables are defined/passed as arguments from the concrete class initializer.
+    def __init__(self, Par: dict, Dist, ID: str):
+        self.ID = ID
+        self.Par = Par
+        self.Dist = Dist
+
+    # Having these functions at hand is probably unnecessary, but it allows straightforward flexibility.
+        self.pdf_function = Dist.pdf
+        self.cdf_function = Dist.cdf
+
+    def mean(self):
+        return self.Dist.mean() # Returns the mean of the distribution.
+
+    def std(self):
+        return self.Dist.std() # Returns the standard deviation of the distribution.
+
+    def random(self, size=None):
+        # Generates random samples according to the distribution of the object. So random lol :P
+        samples = self.Dist.rvs(size=size)
+        return samples
+
+    # idk if this self.pdf_function/self.cdf_funcion approach is meaningful or good practice. For now, it doesn't give
+    # me the impression that it will be problematic. But so do many things in our lives...
+    def pdf(self, x):
+        return self.pdf_function(x) # Returns the value of the PDF.
+
+    def cdf(self, x):
+        return self.cdf_function(x) # Returns the value of the CDF.
+
+    def icdf(self, y):
+        return self.Dist.ppf(y) # Returns the value of the inverse CDF.
+
+class Gaussian(ERADist_abc):
+    def __init__(self, opt, val=[0,1], ID=False):
+
+        # turn the list into a numpy array. I must confess, Idk what happens if the list was already a numpy array.
+        val = np.array(val, ndmin=1, dtype=float)
+
+        # opt is irrelevant in this case, as the Moments and Parameters are the same for the Gaussian.
+        if val[1] > 0:
+            Par = {'mu': val[0], 'sigma': val[1]}
+            Dist = stats.norm(loc=Par['mu'], scale=Par['sigma'])
+            super().__init__(Par, Dist, ID)
+
+        else:
+            # A tragedy, truly!
+            raise RuntimeError("The Normal distribution is not defined for your parameters.")
+
+    #def mean(self):
+    #    print("You uncommented this section didn't you?")
+    #    return "Come change this line if you want to overwrite the .mean() call"
+
+    #def std(self):
+    #    print("Where am I, who am I? did I overwrite the original STD?")
+    #    return self.Dist.std()
+
+class Lognormal(ERADist_abc):
+    def __init__(self, opt, val=[0, 1], ID=False):
+
+        val = np.array(val, ndmin=1, dtype=float)
+
+        if opt.upper() == "PAR":
+            if val[1] > 0:
+                Par = {'mu_lnx': val[0], 'sig_lnx': val[1]}
+                Dist = stats.lognorm(s=Par['sig_lnx'], scale=np.exp(Par['mu_lnx']))
+                super().__init__(Par, Dist, ID)
+            else:
+                raise RuntimeError(
+                    "The Lognormal distribution is not defined for your parameters.")
+
+        elif opt.upper() == "MOM":
+            if val[0] <= 0:
+                raise RuntimeError(
+                    "Please select other moments, the first moment must be greater than zero.")
+            # solve two equations for the parameters of the distribution
+            mu_lnx = np.log(val[0] ** 2 / np.sqrt(val[1] ** 2 + val[0] ** 2))
+            sig_lnx = np.sqrt(np.log(1 + (val[1] / val[0]) ** 2))
+            Par = {'mu_lnx': mu_lnx, 'sig_lnx': sig_lnx}
+            Dist = stats.lognorm(s=Par['sig_lnx'], scale=np.exp(Par['mu_lnx']))
+
+            super().__init__(Par, Dist, ID)
+
+        else:
+            raise RuntimeError("Unknown option :" + opt)
+
+class Beta(ERADist_abc):
+    def __init__(self, opt, val=[0, 1], ID=False):
+
+        val = np.array(val, ndmin=1, dtype=float)
+
+        if opt.upper() == "PAR":
+            """
+            beta distribution in lecture notes can be shifted in order to
+            account for ranges [a,b] -> this is not implemented yet
+            """
+            if (val[0] > 0) and (val[1] > 0) and (val[2] < val[3]):
+                Par = {'r': val[0], 's': val[1], 'a': val[2], 'b': val[3]}
+                Dist = stats.beta(a=Par['r'], b=Par['s'],
+                                       loc=Par['a'], scale=Par['b'] - Par['a'])
+                super().__init__(Par, Dist, ID)
+            else:
+                raise RuntimeError("The Beta distribution is not defined for your parameters.")
+
+        elif opt.upper() == "MOM":
+            if val[3] <= val[2]:
+                raise RuntimeError(f"The support [{val[2]},{val[3]}], fix it.")
+            r = ((val[3] - val[0]) * (val[0] - val[2]) / val[1] ** 2 - 1) * (val[0] - val[2]) / (val[3] - val[2])
+            s = r * (val[3] - val[0]) / (val[0] - val[2])
+            # Evaluate if distribution can be defined on the parameters
+            if r <= 0 and s <= 0:
+                raise RuntimeError("Please select other moments.")
+            Par = {'r': r, 's': s, 'a': val[2], 'b': val[3]}
+            Dist = stats.beta(a=Par['r'], b=Par['s'],
+                                   loc=Par['a'], scale=Par['b'] - Par['a'])
+
+            super().__init__(Par, Dist, ID)
+
+        else:
+            raise RuntimeError("Unknown option :" + opt)
 
 class ERADist(object):
     """
@@ -59,7 +183,7 @@ class ERADist(object):
       
             Obj = ERADist(name,opt,val)
     or      Obj = ERADist(name,opt,val,ID)
-    
+
     The second option is only useful when using the ERADist object within
     the scope of an ERARosen object.
     
@@ -154,8 +278,7 @@ class ERADist(object):
         # definition of the distribution by its parameters
         if opt.upper() == "PAR":
             val = np.array(val, ndmin=1, dtype=float)
-            
-            
+
             if name.lower() == "beta":
                 """
                 beta distribution in lecture notes can be shifted in order to
@@ -289,8 +412,7 @@ class ERADist(object):
                     self.Par = {'mu':val[0], 'sigma':val[1]}
                     self.Dist = stats.norm(loc=self.Par['mu'], scale=self.Par['sigma'])
                 else:
-                    raise RuntimeError(
-                        "The Normal distribution is not defined for your parameters.")
+                    raise RuntimeError("The Normal distribution is not defined for your parameters.")
                     
             
             elif name.lower() == "pareto":
@@ -376,7 +498,7 @@ class ERADist(object):
             if val.size > 1 and val[1] < 0:
                 raise RuntimeError("The standard deviation must be non-negative.")
 
-            if name.lower() == 'beta':
+            if name.lower() == "beta":
                 if val[3] <= val[2]:
                     raise RuntimeError("Please select an other support [a,b].")
                 r = ((val[3]-val[0])*(val[0]-val[2])/val[1]**2-1)*(val[0]-val[2])/(val[3]-val[2])
