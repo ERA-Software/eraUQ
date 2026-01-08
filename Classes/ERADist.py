@@ -51,8 +51,6 @@ moment or by data, given as a vector.
 ---------------------------------------------------------------------------
 """
 
-# ladidadidaaaaaa
-a = 1999
 class ERADist(object):
     """
     Generation of marginal distribution objects.
