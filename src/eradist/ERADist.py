@@ -4,7 +4,7 @@ import scipy as sp
 from scipy import optimize, stats, special
 import warnings
 
-from EmpiricalDist import EmpDist
+from .EmpiricalDist import EmpDist
 
 """
 ---------------------------------------------------------------------------

@@ -1,8 +1,8 @@
 # import of modules
 import numpy as np
 from scipy import stats
-from ERADist import ERADist
-from ERACond import ERACond
+from .ERADist import ERADist
+from .ERACond import ERACond
 import networkx as nx
 import matplotlib.pyplot as plt
 

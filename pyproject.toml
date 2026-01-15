@@ -1,0 +1,11 @@
+[project]
+name = "eradist"
+version = "0.1.0"
+description = "This package provides the base software used by the Engineering Risk Analysis group of TUM"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+keywords = ["Risk", "Reliability"]
+authors = [
+  {name = "Many Names", email = "further.names@example.com"},
+]
