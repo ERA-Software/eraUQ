@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-from EmpiricalDist import EmpDist
+from ERApy import EmpDist
+#from EmpiricalDist import EmpDist
 
 '''
 ---------------------------------------------------------------------------

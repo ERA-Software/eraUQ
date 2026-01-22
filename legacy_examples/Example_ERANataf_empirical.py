@@ -1,5 +1,5 @@
-from ERADist import ERADist
-from ERANataf import ERANataf
+from ERApy import ERADist
+from ERApy import ERANataf
 import numpy as np
 import matplotlib.pylab as plt
 

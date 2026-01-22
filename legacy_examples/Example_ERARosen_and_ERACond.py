@@ -1,6 +1,6 @@
-from ERADist import ERADist
-from ERACond import ERACond
-from ERARosen import ERARosen
+from ERApy import ERADist
+from ERApy import ERACond
+from ERApy import ERARosen
 import numpy as np
 
 #from add_fun import *

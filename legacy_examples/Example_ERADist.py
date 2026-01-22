@@ -1,4 +1,4 @@
-from ..Classes.ERADist import ERADist
+from ERApy import ERADist
 import numpy as np
 import matplotlib.pylab as plt
 
@@ -37,11 +37,11 @@ References:
 ---------------------------------------------------------------------------
 '''
 
-np.random.seed(2021) #initializing random number generator
+np.random.seed(2021)  #initializing random number generator
 
 ''' Definition of an ERADist object by the distribution parameters '''
 
-dist = ERADist('lognormal','PAR',[2,0.5])
+dist = ERADist('lognormal', 'PAR', [2, 0.5])
 
 # computation of the first two moments
 mean_dist = dist.mean()
@@ -55,14 +55,13 @@ samples = dist.random(n)
  Based on the just determined moments a new distribution object with the
  same properties is created... '''
 
-dist_mom = ERADist('lognormal','MOM',[mean_dist,std_dist])
+dist_mom = ERADist('lognormal', 'MOM', [mean_dist, std_dist])
 
 ''' Definition of an ERADist object by data fitting
  Using maximum likelihood estimation a new distribution object is created
  from the samples which were created above.'''
 
-dist_data = ERADist('lognormal','DATA',samples)
-
+dist_data = ERADist('lognormal', 'DATA', samples)
 
 ''' Other methods '''
 
@@ -78,12 +77,11 @@ cdf = dist.cdf(x)
 # computation of the inverse CDF based on the CDF values (-> initial x)
 icdf = dist.icdf(cdf)
 
-
 ''' Plot of the PDF and CDF '''
 
-x_plot = np.linspace(0,40,200);     # values for which the PDF and CDF are evaluated 
-pdf = dist.pdf(x_plot);     # computation of PDF
-cdf = dist.cdf(x_plot);     # computation of CDF
+x_plot = np.linspace(0, 40, 200);  # values for which the PDF and CDF are evaluated
+pdf = dist.pdf(x_plot);  # computation of PDF
+cdf = dist.cdf(x_plot);  # computation of CDF
 
 fig_dist = plt.figure(figsize=[16, 9])
 
@@ -96,3 +94,4 @@ fig_cdf = fig_dist.add_subplot(122)
 fig_cdf.plot(x_plot, cdf)
 fig_cdf.set_xlabel(r'$X$')
 fig_cdf.set_ylabel(r'$CDF$')
+plt.show()
