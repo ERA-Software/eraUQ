@@ -1,5 +1,5 @@
 [project]
-name = "eradist"
+name = "ERApy"
 version = "0.1.0"
 description = "This package provides the base software used by the Engineering Risk Analysis group of TUM"
 readme = "README.md"
@@ -8,4 +8,10 @@ license = {text = "MIT"}
 keywords = ["Risk", "Reliability"]
 authors = [
   {name = "Many Names", email = "further.names@example.com"},
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "networkx"
 ]
