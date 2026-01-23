@@ -1,7 +1,7 @@
 
 # DEV Instructions
 ## Installation
-First, ensure the repository is cloned and you are on the right branch
+First, ensure the repository is cloned and you are on the right branch (develop_pip_library)
 
 The following commands assume that you are **inside the root directory of the package**
 (i.e. the directory containing `pyproject.toml`).
