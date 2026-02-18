@@ -188,107 +188,48 @@ def test_par_case_insensitivity_normal():
 
 # --- Invalid / boundary for remaining distributions ---
 
-def test_par_chisquare_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("chisquare", "PAR", [0.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("chisquare", "PAR", [-1.0])
+PAR_INVALID = [
+    ("chisquare", [0.0]),
+    ("chisquare", [-1.0]),
+    ("exponential", [0.0]),
+    ("exponential", [-1.0]),
+    ("frechet", [0.0, 1.0]),
+    ("frechet", [1.0, 0.0]),
+    ("gamma", [0.0, 1.0]),
+    ("gamma", [1.0, 0.0]),
+    ("geometric", [0.0]),
+    ("geometric", [1.5]),
+    ("gev", [0.2, 0.0, 0.0]),
+    ("gumbel", [0.0, 0.0]),
+    ("lognormal", [0.0, 0.0]),
+    ("lognormal", [0.0, -1.0]),
+    ("negativebinomial", [0.0, 0.5]),
+    ("negativebinomial", [5.0, 1.5]),
+    ("normal", [0.0, 0.0]),
+    ("normal", [0.0, -1.0]),
+    ("pareto", [0.0, 2.0]),
+    ("pareto", [1.0, 0.0]),
+    ("poisson", [0.0]),
+    ("poisson", [-1.0]),
+    ("poisson", [1.0, 0.0]),
+    ("rayleigh", [0.0]),
+    ("rayleigh", [-1.0]),
+    ("uniform", [1.0, 0.0]),
+    ("uniform", [1.0, 1.0]),
+    ("weibull", [0.0, 1.0]),
+    ("weibull", [1.0, 0.0]),
+]
 
 
-def test_par_exponential_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("exponential", "PAR", [0.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("exponential", "PAR", [-1.0])
+def _invalid_id(p):
+    name, val = p
+    return f"{name}-{val}"
 
 
-def test_par_frechet_invalid():
+@pytest.mark.parametrize("name,val", PAR_INVALID, ids=[_invalid_id(x) for x in PAR_INVALID])
+def test_par_invalid_raises(name, val):
     with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("frechet", "PAR", [0.0, 1.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("frechet", "PAR", [1.0, 0.0])
-
-
-def test_par_gamma_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("gamma", "PAR", [0.0, 1.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("gamma", "PAR", [1.0, 0.0])
-
-
-def test_par_geometric_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("geometric", "PAR", [0.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("geometric", "PAR", [1.5])
-
-
-def test_par_gev_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("gev", "PAR", [0.2, 0.0, 0.0])
-
-
-def test_par_gumbel_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("gumbel", "PAR", [0.0, 0.0])
-
-
-def test_par_lognormal_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("lognormal", "PAR", [0.0, 0.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("lognormal", "PAR", [0.0, -1.0])
-
-
-def test_par_negativebinomial_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("negativebinomial", "PAR", [0.0, 0.5])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("negativebinomial", "PAR", [5.0, 1.5])
-
-
-def test_par_normal_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("normal", "PAR", [0.0, 0.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("normal", "PAR", [0.0, -1.0])
-
-
-def test_par_pareto_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("pareto", "PAR", [0.0, 2.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("pareto", "PAR", [1.0, 0.0])
-
-
-def test_par_poisson_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("poisson", "PAR", [0.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("poisson", "PAR", [-1.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("poisson", "PAR", [1.0, 0.0])
-
-
-def test_par_rayleigh_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("rayleigh", "PAR", [0.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("rayleigh", "PAR", [-1.0])
-
-
-def test_par_uniform_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("uniform", "PAR", [1.0, 0.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("uniform", "PAR", [1.0, 1.0])
-
-
-def test_par_weibull_invalid():
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("weibull", "PAR", [0.0, 1.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("weibull", "PAR", [1.0, 0.0])
+        ERADist(name, "PAR", val)
 
 
 # --- Unknown distribution name ---
