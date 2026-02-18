@@ -1,0 +1,45 @@
+name: Publish release to PyPI
+
+on:
+  release:
+    types: [published]
+
+# To switch to production PyPI later: set repository-url to default (or remove it)
+# and use password: ${{ secrets.PYPI_API_TOKEN }} with a token from pypi.org.
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # required for trusted publishing (OIDC)
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set version from release tag
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION=${TAG#v}
+          sed -i "s/^version = .*/version = \"${VERSION}\"/" pyproject.toml
+          echo "Publishing version: ${VERSION}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build dependencies
+        run: pip install build
+
+      - name: Build package
+        run: python -m build
+
+      - name: Publish to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          # Token from https://test.pypi.org/manage/account/token/
+          # Add TEST_PYPI_API_TOKEN to this repo's Actions secrets.
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}

@@ -4,7 +4,7 @@ import scipy as sp
 from scipy import optimize, stats, special
 import warnings
 
-from EmpiricalDist import EmpDist
+from .EmpiricalDist import EmpDist
 
 """
 ---------------------------------------------------------------------------
@@ -50,7 +50,6 @@ They can be defined either by their parameters, the first and second
 moment or by data, given as a vector.
 ---------------------------------------------------------------------------
 """
-
 
 class ERADist(object):
     """
