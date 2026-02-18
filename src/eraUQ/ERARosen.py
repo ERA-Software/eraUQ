@@ -1,8 +1,8 @@
 # import of modules
 import numpy as np
 from scipy import stats
-from ERADist import ERADist
-from ERACond import ERACond
+from .ERADist import ERADist
+from .ERACond import ERACond
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -335,13 +335,13 @@ class ERARosen(object):
                     labels[i] = self.Dist[i].ID
                 else:
                     labels[i] = '#'+str(i)
-        elif not opt.lower == 'numbering':
+        elif opt.lower() == 'numbering':
             for i in range(n_dim):
                 labels[i] = '#'+str(i)
         else:
             raise RuntimeError("opt must be given as 'numbering'.")
                 
-        G_Adj = nx.from_numpy_matrix(self.Adjacency)
+        G_Adj = nx.from_numpy_array(self.Adjacency)
         G = nx.DiGraph()
         for i in range(1,n_layer):
             cur_l = self.Layers[i]
@@ -352,7 +352,7 @@ class ERARosen(object):
                     G.add_edge(str(s_n[k]),str(cur_l[j]))
             
         nx.draw(G, pos_n,node_color='k',alpha = 0.3,node_size=100,arrowsize=20,arrows=True)
-        nx.draw_networkx_labels(G_Adj,pos_l,labels,colors='r',font_size=15)
+        nx.draw_networkx_labels(G_Adj,pos_l,labels,font_color='r',font_size=15)
         plt.xlim([-0.05,1.05])
         plt.ylim([-0.1,1.1])
         plt.show()

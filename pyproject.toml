@@ -1,0 +1,28 @@
+[project]
+name = "eraUQ"
+version = "0.0.1.dev1"
+description = "This package provides the base software used by the Engineering Risk Analysis group of TUM"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+keywords = ["Risk", "Reliability"]
+authors = [
+  {name = "Iason Papaioannou"},
+  {name = "Daniel Straub"},
+  {name = "Sebastian Geyer"},
+  {name = "Felipe Uribe"},
+  {name = "Luca Sardi"},
+  {name = "Fong-Lin Wu"},
+  {name = "Alexander von Ramm"},
+  {name = "Matthias Willer"},
+  {name = "Peter Kaplan"},
+  {name = "Antonios Kamariotis"},
+  {name = "Michael Engel"},
+  {name = "Nicola Bronzetti"},
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "networkx"
+]
