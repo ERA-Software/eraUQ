@@ -22,7 +22,7 @@ xs = dist.random(10_000)
 
 **[Usage overview](notebooks/demonstrate_usage_overview.ipynb)** — install, distributions, sampling, and basic usage.
 
-### [**<img src="https://colab.research.google.com/img/colab_favicon_256px.png" alt="Colab Logo" width="28" style="vertical-align: middle;"/> Open the demonstration notebook in Google Colab**](https://colab.research.google.com/github/ERA-Software/eraUQ/blob/dev_library_theresa/notebooks/demonstrate_usage_overview.ipynb) 
+### [**<img src="https://colab.research.google.com/img/colab_favicon_256px.png" alt="Colab Logo" width="28" style="vertical-align: middle;"/> Open the demonstration notebook in Google Colab**](https://colab.research.google.com/github/ERA-Software/eraUQ/blob/main/notebooks/demonstrate_usage_overview.ipynb) 
 
 ---
 
