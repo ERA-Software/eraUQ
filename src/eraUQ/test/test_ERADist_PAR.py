@@ -17,57 +17,30 @@ def assert_has_par_and_dist(obj):
 
 # --- Valid parameter sets (typical values) ---
 
-PAR_VALID = {
-    "beta": [2.0, 5.0, 0.0, 1.0],
-    "binomial": [10, 0.5],
-    "chisquare": [3.0],
-    "exponential": [1.5],
-    "frechet": [2.0, 3.0],
-    "gamma": [2.0, 3.0],
-    "geometric": [0.4],
-    "gev": [0.2, 1.0, 0.0],
-    "gevmin": [0.2, 1.0, 0.0],
-    "gumbel": [1.0, 0.0],
-    "gumbelmin": [1.0, 0.0],
-    "lognormal": [0.0, 1.0],
-    "negativebinomial": [5.0, 0.5],
-    "normal": [0.0, 1.0],
-    "pareto": [1.0, 2.5],
-    "poisson": [3.0],
-    "poisson_vt": [2.0, 1.5],
-    "rayleigh": [2.0],
-    "standardnormal": [],
-    "truncatednormal": [0.0, 1.0, -2.0, 2.0],
-    "uniform": [0.0, 1.0],
-    "weibull": [1.0, 2.0],
-}
-
-
 @pytest.mark.parametrize("name,val", [
-    ("beta", PAR_VALID["beta"]),
-    ("binomial", PAR_VALID["binomial"]),
-    ("chisquare", PAR_VALID["chisquare"]),
-    ("exponential", PAR_VALID["exponential"]),
-    ("frechet", PAR_VALID["frechet"]),
-    ("gamma", PAR_VALID["gamma"]),
-    ("geometric", PAR_VALID["geometric"]),
-    ("gev", PAR_VALID["gev"]),
-    ("gevmin", PAR_VALID["gevmin"]),
-    ("gumbel", PAR_VALID["gumbel"]),
-    ("gumbelmin", PAR_VALID["gumbelmin"]),
-    ("lognormal", PAR_VALID["lognormal"]),
-    ("negativebinomial", PAR_VALID["negativebinomial"]),
-    ("normal", PAR_VALID["normal"]),
-    ("pareto", PAR_VALID["pareto"]),
-    ("rayleigh", PAR_VALID["rayleigh"]),
-    ("standardnormal", PAR_VALID["standardnormal"]),
-    ("truncatednormal", PAR_VALID["truncatednormal"]),
-    ("uniform", PAR_VALID["uniform"]),
-    ("weibull", PAR_VALID["weibull"]),
+    ("beta", [2.0, 5.0, 0.0, 1.0]),
+    ("binomial", [10, 0.5]),
+    ("chisquare", [3.0]),
+    ("exponential", [1.5]),
+    ("frechet", [2.0, 3.0]),
+    ("gamma", [2.0, 3.0]),
+    ("geometric", [0.4]),
+    ("gev", [0.2, 1.0, 0.0]),
+    ("gevmin", [0.2, 1.0, 0.0]),
+    ("gumbel", [1.0, 0.0]),
+    ("gumbelmin", [1.0, 0.0]),
+    ("lognormal", [0.0, 1.0]),
+    ("negativebinomial", [5.0, 0.5]),
+    ("normal", [0.0, 1.0]),
+    ("pareto", [1.0, 2.5]),
+    ("poisson", [3.0]),
+    ("rayleigh", [2.0]),
+    ("standardnormal", []),
+    ("truncatednormal", [0.0, 1.0, -2.0, 2.0]),
+    ("uniform", [0.0, 1.0]),
+    ("weibull", [1.0, 2.0]),
 ])
 def test_par_valid_typical(name, val):
-    if name == "poisson_vt":
-        pytest.skip("poisson_vt tested separately")
     obj = ERADist(name, "PAR", val)
     assert_has_par_and_dist(obj)
     assert obj.Name == name.lower()
@@ -101,18 +74,16 @@ def test_par_beta_boundary():
     assert obj.Par["a"] < obj.Par["b"]
 
 
-def test_par_beta_invalid_r_s_zero():
+@pytest.mark.parametrize("par_val", [[0.0, 5.0, 0.0, 1.0], [2.0, 0.0, 0.0, 1.0]], ids=["r_zero", "s_zero"])
+def test_par_beta_invalid_r_s_zero(par_val):
     with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("beta", "PAR", [0.0, 5.0, 0.0, 1.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("beta", "PAR", [2.0, 0.0, 0.0, 1.0])
+        ERADist("beta", "PAR", par_val)
 
 
-def test_par_beta_invalid_a_ge_b():
+@pytest.mark.parametrize("par_val", [[2.0, 5.0, 1.0, 1.0], [2.0, 5.0, 2.0, 1.0]], ids=["a_eq_b", "a_gt_b"])
+def test_par_beta_invalid_a_ge_b(par_val):
     with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("beta", "PAR", [2.0, 5.0, 1.0, 1.0])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("beta", "PAR", [2.0, 5.0, 2.0, 1.0])
+        ERADist("beta", "PAR", par_val)
 
 
 # --- Binomial: n integer, 0<=p<=1 ---
@@ -123,18 +94,19 @@ def test_par_binomial_valid():
     assert_has_par_and_dist(obj)
 
 
-def test_par_binomial_boundary():
-    obj = ERADist("binomial", "PAR", [1, 0.0])
-    assert obj.Par["n"] == 1 and obj.Par["p"] == 0.0
-    obj = ERADist("binomial", "PAR", [5, 1.0])
-    assert obj.Par["p"] == 1.0
+@pytest.mark.parametrize("par_val,expected_n,expected_p", [
+    ([1, 0.0], 1, 0.0),
+    ([5, 1.0], 5, 1.0),
+], ids=["n1_p0", "n5_p1"])
+def test_par_binomial_boundary(par_val, expected_n, expected_p):
+    obj = ERADist("binomial", "PAR", par_val)
+    assert obj.Par["n"] == expected_n and obj.Par["p"] == expected_p
 
 
-def test_par_binomial_invalid_p_out_of_range():
+@pytest.mark.parametrize("par_val", [[10, -0.1], [10, 1.1]], ids=["p_negative", "p_gt_one"])
+def test_par_binomial_invalid_p_out_of_range(par_val):
     with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("binomial", "PAR", [10, -0.1])
-    with pytest.raises(RuntimeError, match="not defined for your parameters"):
-        ERADist("binomial", "PAR", [10, 1.1])
+        ERADist("binomial", "PAR", par_val)
 
 
 def test_par_binomial_invalid_n_non_integer():
@@ -151,11 +123,10 @@ def test_par_truncatednormal_valid():
     assert_has_par_and_dist(obj)
 
 
-def test_par_truncatednormal_invalid_a_ge_b():
+@pytest.mark.parametrize("par_val", [[0.0, 1.0, 2.0, 2.0], [0.0, 1.0, 1.0, -1.0]], ids=["a_eq_b", "a_gt_b"])
+def test_par_truncatednormal_invalid_a_ge_b(par_val):
     with pytest.raises(RuntimeError, match="upper bound a must be larger than the lower bound b"):
-        ERADist("truncatednormal", "PAR", [0.0, 1.0, 2.0, 2.0])
-    with pytest.raises(RuntimeError, match="upper bound a must be larger than the lower bound b"):
-        ERADist("truncatednormal", "PAR", [0.0, 1.0, 1.0, -1.0])
+        ERADist("truncatednormal", "PAR", par_val)
 
 
 def test_par_truncatednormal_invalid_sigma_negative():
@@ -165,15 +136,11 @@ def test_par_truncatednormal_invalid_sigma_negative():
 
 # --- StandardNormal: empty parameter list ---
 
-def test_par_standardnormal_empty_params():
-    obj = ERADist("standardnormal", "PAR", [])
+@pytest.mark.parametrize("name", ["standardnormal", "standardgaussian"], ids=["standardnormal", "standardgaussian"])
+def test_par_standardnormal_empty_params(name):
+    obj = ERADist(name, "PAR", [])
     assert obj.Par["mu"] == 0 and obj.Par["sigma"] == 1
     assert_has_par_and_dist(obj)
-
-
-def test_par_standardgaussian_empty_params():
-    obj = ERADist("standardgaussian", "PAR", [])
-    assert obj.Par["mu"] == 0 and obj.Par["sigma"] == 1
 
 
 # --- Case insensitivity: Normal / normal / GAUSSIAN ---
@@ -188,7 +155,7 @@ def test_par_case_insensitivity_normal():
 
 # --- Invalid / boundary for remaining distributions ---
 
-PAR_INVALID = [
+@pytest.mark.parametrize("name,val", [
     ("chisquare", [0.0]),
     ("chisquare", [-1.0]),
     ("exponential", [0.0]),
@@ -218,15 +185,14 @@ PAR_INVALID = [
     ("uniform", [1.0, 1.0]),
     ("weibull", [0.0, 1.0]),
     ("weibull", [1.0, 0.0]),
-]
-
-
-def _invalid_id(p):
-    name, val = p
-    return f"{name}-{val}"
-
-
-@pytest.mark.parametrize("name,val", PAR_INVALID, ids=[_invalid_id(x) for x in PAR_INVALID])
+], ids=[
+    "chisquare-0", "chisquare-neg", "exp-0", "exp-neg", "frechet-0", "frechet-inv",
+    "gamma-0", "gamma-inv", "geom-0", "geom-1.5", "gev-alpha0", "gumbel-0",
+    "lognorm-0", "lognorm-negsig", "negbinom-0", "negbinom-p>1", "normal-0",
+    "normal-negsig", "pareto-0", "pareto-alpha0", "poisson-0", "poisson-neg",
+    "poisson-t0", "rayleigh-0", "rayleigh-neg", "uniform-inv", "uniform-eq",
+    "weibull-0", "weibull-inv",
+])
 def test_par_invalid_raises(name, val):
     with pytest.raises(RuntimeError, match="not defined for your parameters"):
         ERADist(name, "PAR", val)
