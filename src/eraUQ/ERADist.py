@@ -791,12 +791,15 @@ class ERADist(object):
                 
             elif name.lower() == "negativebinomial":
                 # first estimation of k,p with method of moments
-                p = np.mean(val)/(np.mean(val)+np.var(val))
-                k = np.mean(val)*p
-                if k==0:
+                mean_val = np.mean(val)
+                if mean_val <= 0:
                     raise RuntimeError("No suitable parameters can be estimated from the given data.")
-                k = round(k, 0) # rounding of k, since k must be a positive integer according to ERADist definition
-                p = k/np.mean(val); # estimation of p for rounded k (mle)
+                p = mean_val / (mean_val + np.var(val))
+                k = mean_val * p
+                if k <= 0 or not np.isfinite(k):
+                    raise RuntimeError("No suitable parameters can be estimated from the given data.")
+                k = round(k, 0)  # rounding of k, since k must be a positive integer according to ERADist definition
+                p = k / mean_val  # estimation of p for rounded k (mle)
                 self.Par = {'k':k, 'p':p}
                 self.Dist = stats.nbinom(n=self.Par['k'], p=self.Par['p'])
 
@@ -816,7 +819,8 @@ class ERADist(object):
                     x0 = x_m
                     sol = optimize.minimize(equation, x0)
                     if sol.success == True:
-                        self.Par = {'x_m':x_m,'alpha':float(sol.x)}
+                        alpha = float(np.asarray(sol.x).flat[0])
+                        self.Par = {'x_m':x_m,'alpha':alpha}
                         self.Dist = stats.genpareto(c=1 / self.Par['alpha'],
                                 scale=self.Par['x_m']/self.Par['alpha'], loc=self.Par['x_m'])
                     else:

@@ -158,7 +158,7 @@ def create_normalized_pdf_from_cdf(cdf_func, x_min, x_max, num_points=1000, kind
     cdf_vals = cdf_func(x_grid)
     
     raw_pdf_vals = np.gradient(cdf_vals, x_grid)
-    area = np.trapz(raw_pdf_vals, x_grid)
+    area = np.trapezoid(raw_pdf_vals, x_grid)
     
     if area != 0:
         pdf_vals = raw_pdf_vals / area
