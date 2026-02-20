@@ -234,10 +234,10 @@ def test_data_pareto_valid():
 
 def test_data_pareto_invalid_non_positive():
     X = np.array([0.0, 1.0, 2.0])
-    with pytest.raises(RuntimeError, match="The given data must be positive"):
+    with pytest.raises(RuntimeError, match="Pareto data must be .* positive"):
         ERADist("pareto", "DATA", X)
     X2 = np.array([-1.0, 2.0])
-    with pytest.raises(RuntimeError, match="The given data must be positive"):
+    with pytest.raises(RuntimeError, match="Pareto data must be .* positive"):
         ERADist("pareto", "DATA", X2)
 
 

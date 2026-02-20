@@ -811,22 +811,31 @@ class ERADist(object):
                 
                 
             elif name.lower() == "pareto":
+                val = np.asarray(val, dtype=float)
                 x_m = min(val)
-                if x_m > 0:
-                    def equation(par):
-                            return (-np.sum(np.log(stats.genpareto.pdf(val,c = 1 / par, scale = x_m / par, loc = x_m))))
+                if x_m <= 0:
+                    raise RuntimeError("Pareto data must be stricly positive.")
+                
+                def equation(par):
+                        return (-np.sum(np.log(stats.genpareto.pdf(val,c = 1 / par, scale = x_m / par, loc = x_m))))
 
-                    x0 = x_m
-                    sol = optimize.minimize(equation, x0)
-                    if sol.success == True:
-                        alpha = float(np.asarray(sol.x).flat[0])
-                        self.Par = {'x_m':x_m,'alpha':alpha}
-                        self.Dist = stats.genpareto(c=1 / self.Par['alpha'],
-                                scale=self.Par['x_m']/self.Par['alpha'], loc=self.Par['x_m'])
-                    else:
-                        raise RuntimeError("Maximum likelihood estimation did not converge.")
+                # Initial guess for alpha: method of moments (mean = x_m * alpha / (alpha - 1) => alpha = mean/(mean-x_m))
+                mean_val = np.mean(val)
+                if mean_val > x_m:
+                    x0 = mean_val / (mean_val - x_m)
                 else:
-                    raise RuntimeError("The given data must be positive.")
+                    x0 = 2.0
+                x0 = max(2.0, float(x0))  # alpha > 1 for finite mean
+                sol = optimize.minimize(equation, x0, method='L-BFGS-B', bounds=[(1.0 + 1e-6, None)])
+                
+                if sol.success == True:
+                    alpha = float(np.asarray(sol.x).flat[0])
+                    self.Par = {'x_m':x_m,'alpha':alpha}
+                    self.Dist = stats.genpareto(c=1 / self.Par['alpha'],
+                            scale=self.Par['x_m']/self.Par['alpha'], loc=self.Par['x_m'])
+                else:
+                    raise RuntimeError("Maximum likelihood estimation did not converge.")
+
                 
                 
             elif name.lower() == "poisson":
@@ -993,7 +1002,8 @@ class ERADist(object):
             return -self.Dist.ppf(1-y)
         
         elif self.Name == "negativebinomial":
-            return self.Dist.ppf(y) + self.Par['k']
+            # Support is {k, k+1, ...}; scipy nbinom.ppf(0) may return -1, so clamp to k
+            return np.maximum(self.Par['k'], self.Dist.ppf(y) + self.Par['k'])
 
         else:
             return self.Dist.ppf(y)
