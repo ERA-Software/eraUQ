@@ -376,30 +376,49 @@ class ERADist(object):
                 raise RuntimeError("The standard deviation must be non-negative.")
 
             if name.lower() == 'beta':
-                if val[3] <= val[2]:
-                    raise RuntimeError("Please select an other support [a,b].")
-                r = ((val[3]-val[0])*(val[0]-val[2])/val[1]**2-1)*(val[0]-val[2])/(val[3]-val[2])
-                s = r*(val[3]-val[0])/(val[0]-val[2])
+                mu, sigma, a, b = val
+                if b <= a:
+                    raise RuntimeError(f"Upper bound {b=} must be greater than lower bound {a=}.")
+
+                if not (a < mu < b):
+                    raise RuntimeError(f"Mean {mu=} must lie strictly between a={a} and b={b}.")
+
+                if sigma <= 0:
+                    raise RuntimeError(f"Standard deviation {sigma=} must be positive.")
+
+                if sigma**2 >= (mu - a) * (b - mu):
+                    raise RuntimeError(
+                        f"Variance {sigma**2=} too large for a Beta distribution on [a={a},b={b}]."
+                    )
+
+                r = ((b-mu) * (mu-a) / sigma**2-1) * (mu-a) / (b-a) # = alpha
+                s = r * (b-mu) / (mu-a) # = beta
                 # Evaluate if distribution can be defined on the parameters
-                if r <= 0 and s <= 0:
-                    raise RuntimeError("Please select other moments.")
-                self.Par = {'r':r,'s':s,'a':val[2],'b':val[3]}
+                # Beta requires both r > 0 and s > 0
+                if r <= 0 or s <= 0:
+                    raise RuntimeError(f"The moments you defined do not lead to a valid Beta distribution: {r=} and {s=}. They must be positive. Please select other moments.")
+                self.Par = {'r':r,'s':s,'a':a,'b':b}
                 self.Dist = stats.beta(a=self.Par['r'], b=self.Par['s'],
-                            loc=self.Par['a'],scale = self.Par['b']-self.Par['a'])             
+                            loc=self.Par['a'], scale = self.Par['b']-self.Par['a'])             
                 
 
             elif name.lower() == "binomial":
-                # Solve system of two equations for the parameters
-                p = 1 - (val[1]) ** 2 / val[0]
-                n = val[0] / p
-                # Evaluate if distribution can be defined on the parameters
-                if n % 1 <= 10 ** (-4):
-                    n = int(n)
+                mu, sigma = val
+                # Method of moments: mean = n*p, var = n*p*(1-p) => p = 1 - std^2/mean, n = mean/p
+                if mu <= 0:
+                    raise RuntimeError(f"Mean {mu=} must be positive for binomial MOM.")
+                p = 1 - sigma ** 2 / mu
+                if not (0 < p <= 1):
+                    raise RuntimeError(f"Probability {p=} must lie strictly between 0 and 1. Please select other moments.")
+                n = mu / p
+                # n must be a positive integer (within tolerance)
+                if abs(n - np.round(n)) <= 10 ** (-4):
+                    n = int(np.round(n))
                 else:
-                    raise RuntimeError("Please select other moments.")
-                if 0 <= p and p <= 1 and 0 < n:
-                        self.Par = {'n':n, 'p':p}
-                        self.Dist = stats.binom(n=self.Par['n'], p=self.Par['p'])
+                    raise RuntimeError(f"Please select other moments. {n=} is not a positive integer.")
+                if n > 0:
+                    self.Par = {'n': n, 'p': p}
+                    self.Dist = stats.binom(n=self.Par['n'], p=self.Par['p'])
                 else:
                     raise RuntimeError("Please select other moments.")
                     
@@ -413,10 +432,9 @@ class ERADist(object):
                         
                     
             elif name.lower() == "exponential":
-                try:
-                    lam = 1 / val[0]
-                except ZeroDivisionError:
+                if val[0] <= 0:
                     raise RuntimeError("The first moment cannot be zero!")
+                lam = 1 / val[0]
                 if 0 <= lam:
                     self.Par = {'lambda':lam}
                     self.Dist = stats.expon(scale=1 / self.Par['lambda'])
@@ -448,10 +466,14 @@ class ERADist(object):
                     
             
             elif name.lower() == "gamma":
-                # Solve system of equations for the parameters
-                lam = val[0] / (val[1] ** 2)
-                k = lam * val[0]
-                # Evaluate if distribution can be defined on the parameters
+                # Method of moments: mean = k/lam, var = k/lam^2 => lam = mean/std^2, k = mean*lam
+                mu, sigma = val
+                if mu <= 0:
+                    raise RuntimeError(f"Mean {mu=} must be positive for gamma MOM.")
+                if sigma <= 0:
+                    raise RuntimeError(f"Standard deviation {sigma=} must be positive for gamma MOM.")
+                lam = mu / (sigma ** 2)
+                k = lam * mu
                 if lam > 0 and k > 0:
                     self.Par = {'lambda':lam, 'k':k}
                     self.Dist = stats.gamma(a=self.Par['k'], scale=1/self.Par['lambda'])
@@ -533,14 +555,16 @@ class ERADist(object):
                 
                 
             elif name.lower() == "negativebinomial":
-                # Solve System of two equations for the parameters
+                # Method of moments: mean = k*(1-p)/p, var = k*(1-p)/p^2 => p = mean/(mean+std^2), k = mean*p
+                if val[0] <= 0:
+                    raise RuntimeError("Mean must be positive for negative binomial MOM.")
                 p = val[0] / (val[0] + val[1] ** 2)
                 k = val[0] * p
-                # Evaluate if distribution can be defined on the parameters
-                if k % 1 <= 10 ** (-4):
-                    k = round(k, 0)
-                    if 0 <= p and p <= 1:
-                        self.Par = {'k':k, 'p':p}
+                # k must be a positive integer (within tolerance)
+                if abs(k - np.round(k)) <= 10 ** (-4):
+                    k = int(np.round(k))
+                    if k > 0 and 0 < p <= 1:
+                        self.Par = {'k': k, 'p': p}
                         self.Dist = stats.nbinom(n=self.Par['k'], p=self.Par['p'])
                     else:
                         raise RuntimeError("Please select other moments.")
@@ -767,12 +791,15 @@ class ERADist(object):
                 
             elif name.lower() == "negativebinomial":
                 # first estimation of k,p with method of moments
-                p = np.mean(val)/(np.mean(val)+np.var(val))
-                k = np.mean(val)*p
-                if k==0:
+                mean_val = np.mean(val)
+                if mean_val <= 0:
                     raise RuntimeError("No suitable parameters can be estimated from the given data.")
-                k = round(k, 0) # rounding of k, since k must be a positive integer according to ERADist definition
-                p = k/np.mean(val); # estimation of p for rounded k (mle)
+                p = mean_val / (mean_val + np.var(val))
+                k = mean_val * p
+                if k <= 0 or not np.isfinite(k):
+                    raise RuntimeError("No suitable parameters can be estimated from the given data.")
+                k = round(k, 0)  # rounding of k, since k must be a positive integer according to ERADist definition
+                p = k / mean_val  # estimation of p for rounded k (mle)
                 self.Par = {'k':k, 'p':p}
                 self.Dist = stats.nbinom(n=self.Par['k'], p=self.Par['p'])
 
@@ -784,21 +811,31 @@ class ERADist(object):
                 
                 
             elif name.lower() == "pareto":
+                val = np.asarray(val, dtype=float)
                 x_m = min(val)
-                if x_m > 0:
-                    def equation(par):
-                            return (-np.sum(np.log(stats.genpareto.pdf(val,c = 1 / par, scale = x_m / par, loc = x_m))))
+                if x_m <= 0:
+                    raise RuntimeError("Pareto data must be stricly positive.")
+                
+                def equation(par):
+                        return (-np.sum(np.log(stats.genpareto.pdf(val,c = 1 / par, scale = x_m / par, loc = x_m))))
 
-                    x0 = x_m
-                    sol = optimize.minimize(equation, x0)
-                    if sol.success == True:
-                        self.Par = {'x_m':x_m,'alpha':float(sol.x)}
-                        self.Dist = stats.genpareto(c=1 / self.Par['alpha'],
-                                scale=self.Par['x_m']/self.Par['alpha'], loc=self.Par['x_m'])
-                    else:
-                        raise RuntimeError("Maximum likelihood estimation did not converge.")
+                # Initial guess for alpha: method of moments (mean = x_m * alpha / (alpha - 1) => alpha = mean/(mean-x_m))
+                mean_val = np.mean(val)
+                if mean_val > x_m:
+                    x0 = mean_val / (mean_val - x_m)
                 else:
-                    raise RuntimeError("The given data must be positive.")
+                    x0 = 2.0
+                x0 = max(2.0, float(x0))  # alpha > 1 for finite mean
+                sol = optimize.minimize(equation, x0, method='L-BFGS-B', bounds=[(1.0 + 1e-6, None)])
+                
+                if sol.success == True:
+                    alpha = float(np.asarray(sol.x).flat[0])
+                    self.Par = {'x_m':x_m,'alpha':alpha}
+                    self.Dist = stats.genpareto(c=1 / self.Par['alpha'],
+                            scale=self.Par['x_m']/self.Par['alpha'], loc=self.Par['x_m'])
+                else:
+                    raise RuntimeError("Maximum likelihood estimation did not converge.")
+
                 
                 
             elif name.lower() == "poisson":
@@ -965,7 +1002,8 @@ class ERADist(object):
             return -self.Dist.ppf(1-y)
         
         elif self.Name == "negativebinomial":
-            return self.Dist.ppf(y) + self.Par['k']
+            # Support is {k, k+1, ...}; scipy nbinom.ppf(0) may return -1, so clamp to k
+            return np.maximum(self.Par['k'], self.Dist.ppf(y) + self.Par['k'])
 
         else:
             return self.Dist.ppf(y)
