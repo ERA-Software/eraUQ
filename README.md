@@ -7,7 +7,7 @@ Base software of the **Engineering Risk Analysis** group at TUM for uncertainty 
 Install from PyPI:
 
 ```bash
-pip install eraUQ
+%pip install eraUQ
 ```
 
 Then use in Python:
